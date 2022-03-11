@@ -15,6 +15,7 @@ The program will create a directory `course-info` in the current working directo
 
 - download linked PDFs (as long as they have the right prefix)
 - download the course pages as HTML (without navigation, headers, ...)
+- outputs a list of links to external pages (pages not starting with the prefix)
 
 ## Problems
 
