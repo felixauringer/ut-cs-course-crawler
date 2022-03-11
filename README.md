@@ -1,4 +1,4 @@
-# Crawler for UT course pages
+# Crawler for UT CS course pages
 
 This project is a web crawler that is specifically designed to download all files from the [course page](https://courses.cs.ut.ee) of a course of the Institute of Computer Science at the University of Tartu in Estonia.
 
