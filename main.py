@@ -99,19 +99,19 @@ class Crawler:
                 out.write('The following pages were downloaded and scanned:\n')
             else:
                 out.write('No pages were downloaded or scanned.\n')
-            for key in self.visited:
+            for key in sorted(self.visited.keys()):
                 out.write(f'\t{key.geturl()}\n')
             if len(self.external_links) > 0:
                 out.write('The following external pages were not downloaded or scanned:\n')
             else:
                 out.write('No external pages were found.\n')
-            for link in self.external_links:
+            for link in sorted(self.external_links):
                 out.write(f'\t{link.geturl()}\n')
             if len(self.broken_links) > 0:
                 out.write('The following local pages did not contain the expected HTML structure:\n')
             else:
                 out.write('No broken local pages were found.\n')
-            for link in self.broken_links:
+            for link in sorted(self.broken_links):
                 out.write(f'\t{link.geturl()}\n')
         for url, path_content in self.visited.items():
             filename = path_content[0]
