@@ -95,13 +95,22 @@ class Crawler:
     def export_results(self):
         with open(self.output_directory.joinpath('output.txt'), 'w') as out:
             out.write(f'The crawler found {self.link_count} links and downloaded {len(self.visited)} pages.\n')
-            out.write('The following pages were downloaded and scanned:\n')
+            if len(self.visited) > 0:
+                out.write('The following pages were downloaded and scanned:\n')
+            else:
+                out.write('No pages were downloaded or scanned.\n')
             for key in self.visited:
                 out.write(f'\t{key.geturl()}\n')
-            out.write('The following external pages were not downloaded and scanned:\n')
+            if len(self.external_links) > 0:
+                out.write('The following external pages were not downloaded or scanned:\n')
+            else:
+                out.write('No external pages were found.\n')
             for link in self.external_links:
                 out.write(f'\t{link.geturl()}\n')
-            out.write('The following local pages did not contain the expected HTML structure:\n')
+            if len(self.broken_links) > 0:
+                out.write('The following local pages did not contain the expected HTML structure:\n')
+            else:
+                out.write('No broken local pages were found.\n')
             for link in self.broken_links:
                 out.write(f'\t{link.geturl()}\n')
         for url, path_content in self.visited.items():
