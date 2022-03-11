@@ -16,6 +16,7 @@ class Crawler:
             self.prefix = parse.urlparse(prefix)._replace(params='', query='', fragment='')
         self.visited = {}
         self.external_links = []
+        self.broken_links = []
         self.queue = [start]
         self.link_count = 0
         self.output_directory = Path.cwd().joinpath('course-info')
@@ -50,19 +51,31 @@ class Crawler:
     def parse_page(self, url):
         cookies = dict(userlang='en')
         response = requests.get(url.geturl(), cookies=cookies)
+        valid_content = True
         try:
             content_type = response.headers['content-type']
         except KeyError:
             content_type = ''
         if 'text/html' in content_type:
             soup = BeautifulSoup(response.text, 'html.parser')
-            body = soup.find(name='article', class_='content').wrap(soup.new_tag('body'))
+            article = soup.find(name='article', class_='content')
             navigation = soup.find(name='nav', class_='sidebar')
-            html = body.wrap(soup.new_tag('html'))
-            content = html.prettify().encode()
-            suffix = '.html'
+            if article is None:
+                if url not in self.broken_links:
+                    self.broken_links.append(url)
+                valid_content = False
+            else:
+                body = article.wrap(soup.new_tag('body'))
+                html = body.wrap(soup.new_tag('html'))
+                content = html.prettify().encode()
+                suffix = '.html'
 
-            for link in body.find_all('a', href=True) + navigation.find_all('a', href=True):
+            links = []
+            if navigation is not None:
+                links += navigation.find_all('a', href=True)
+            if article is not None:
+                links += article.find_all('a', href=True)
+            for link in links:
                 self.link_count += 1
                 sanitized = self.sanitize(link.get('href'), url)
                 if sanitized.scheme == self.prefix.scheme and sanitized.netloc == self.prefix.netloc \
@@ -76,7 +89,8 @@ class Crawler:
         else:
             content = response.content
             suffix = '.bin'
-        self.visited[url] = (self.url_to_path(url, suffix), content)
+        if valid_content:
+            self.visited[url] = (self.url_to_path(url, suffix), content)
 
     def export_results(self):
         with open(self.output_directory.joinpath('output.txt'), 'w') as out:
@@ -86,6 +100,9 @@ class Crawler:
                 out.write(f'\t{key.geturl()}\n')
             out.write('The following external pages were not downloaded and scanned:\n')
             for link in self.external_links:
+                out.write(f'\t{link.geturl()}\n')
+            out.write('The following local pages did not contain the expected HTML structure:\n')
+            for link in self.broken_links:
                 out.write(f'\t{link.geturl()}\n')
         for url, path_content in self.visited.items():
             filename = path_content[0]
