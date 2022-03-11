@@ -19,8 +19,3 @@ The program will create a directory `course-info` in the current working directo
 - finds broken links on the course page
 - deterministic output so that you can clearly see which parts of the course page were changed since the last run
 
-## Problems
-
-- does not download CSS files
-- output directory not specifiable
-
