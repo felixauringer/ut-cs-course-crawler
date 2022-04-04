@@ -24,13 +24,14 @@ class Crawler:
         Path.mkdir(self.output_directory, exist_ok=True)
 
     def sanitize(self, url, current):
-        url = parse.urlparse(url)._replace(params='', query='', fragment='')
+        url = parse.urlparse(url)._replace(params='', query='')
         if not url.netloc:
             # relative url
             url = url._replace(scheme=current.scheme, netloc=current.netloc)
-        if not url.path:
+        if not url.path and url.fragment:
             # was only fragment
             url = url._replace(path=current.path)
+        url = url._replace(fragment='')
         return url
 
     def url_to_path(self, url, suffix):
