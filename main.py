@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 class Crawler:
-    def __init__(self, start, prefixes=None):
+    def __init__(self, start, prefixes=None, output_directory='course-info'):
         start = parse.urlparse(start)._replace(params='', query='', fragment='')
         self.prefixes = []
         if prefixes is None:
@@ -20,7 +20,8 @@ class Crawler:
         self.external_links = []
         self.queue = [start]
         self.link_count = 0
-        self.output_directory = Path.cwd().joinpath('course-info')
+        # if output directory is an absolute path, joinpath will ignore the current working directory
+        self.output_directory = Path.cwd().joinpath(output_directory)
         Path.mkdir(self.output_directory, exist_ok=True)
 
     def sanitize(self, url, current):
@@ -122,10 +123,11 @@ class Crawler:
 def main():
     parser = argparse.ArgumentParser(description='Crawl course pages from courses.cs.ut.ee')
     parser.add_argument('--prefixes', help='only crawl pages matching one of these prefixes (separated with comma)')
+    parser.add_argument('--output', help='directory where the results should be written (will be created if not there)')
     parser.add_argument('start', help='first webpage to crawl')
     args = parser.parse_args()
 
-    crawler = Crawler(args.start, args.prefixes)
+    crawler = Crawler(args.start, args.prefixes, args.output)
     crawler.run()
     crawler.export_results()
 
