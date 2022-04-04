@@ -18,7 +18,6 @@ class Crawler:
                 self.prefixes.append(parse.urlparse(prefix)._replace(params='', query='', fragment=''))
         self.visited = {}
         self.external_links = []
-        self.broken_links = []
         self.queue = [start]
         self.link_count = 0
         self.output_directory = Path.cwd().joinpath('course-info')
@@ -53,7 +52,6 @@ class Crawler:
     def parse_page(self, url):
         cookies = dict(userlang='en')
         response = requests.get(url.geturl(), cookies=cookies)
-        valid_content = True
         try:
             content_type = response.headers['content-type']
         except KeyError:
@@ -63,16 +61,16 @@ class Crawler:
             article = soup.find(name='article', class_='content')
             navigation = soup.find(name='nav', class_='sidebar')
             if article is None:
-                if url not in self.broken_links:
-                    self.broken_links.append(url)
-                valid_content = False
+                # site that does not match the wiki structure of courses.cs.ut.ee
+                content = soup.prettify().encode()
             else:
                 body = article.wrap(soup.new_tag('body'))
                 html = body.wrap(soup.new_tag('html'))
                 content = html.prettify().encode()
-                suffix = '.html'
+            suffix = '.html'
 
             links = []
+            # this only collects link from wiki pages and the navigation
             if navigation is not None:
                 links += navigation.find_all('a', href=True)
             if article is not None:
@@ -93,8 +91,7 @@ class Crawler:
         else:
             content = response.content
             suffix = '.bin'
-        if valid_content:
-            self.visited[url] = (self.url_to_path(url, suffix), content)
+        self.visited[url] = (self.url_to_path(url, suffix), content)
 
     def export_results(self):
         with open(self.output_directory.joinpath('output.txt'), 'w') as out:
@@ -110,12 +107,6 @@ class Crawler:
             else:
                 out.write('No external pages were found.\n')
             for link in sorted(self.external_links):
-                out.write(f'\t{link.geturl()}\n')
-            if len(self.broken_links) > 0:
-                out.write('The following local pages did not contain the expected HTML structure:\n')
-            else:
-                out.write('No broken local pages were found.\n')
-            for link in sorted(self.broken_links):
                 out.write(f'\t{link.geturl()}\n')
         for url, path_content in self.visited.items():
             filename = path_content[0]
