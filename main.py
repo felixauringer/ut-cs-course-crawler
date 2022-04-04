@@ -40,6 +40,7 @@ class Crawler:
             path = Path(*path.parts[1:])
         if not path.suffix:
             path = path.with_suffix(suffix)
+        path = Path(f'{url.scheme}-{parse.unquote(url.netloc)}', *path.parts)
         path = self.output_directory.joinpath(path)
         return path
 
