@@ -37,6 +37,8 @@ class Crawler:
 
     def url_to_path(self, url, suffix):
         path = Path(parse.unquote(url.path).replace(' ', '_'))
+        if len(path.parts) == 0:
+            path = Path('index')
         if path.is_absolute():
             path = Path(*path.parts[1:])
         if not path.suffix:
