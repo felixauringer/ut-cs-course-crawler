@@ -8,12 +8,14 @@ from pathlib import Path
 
 
 class Crawler:
-    def __init__(self, start, prefix=None):
+    def __init__(self, start, prefixes=None):
         start = parse.urlparse(start)._replace(params='', query='', fragment='')
-        if prefix is None:
-            self.prefix = start._replace(path='')
+        self.prefixes = []
+        if prefixes is None:
+            self.prefixes.append(start._replace(path=''))
         else:
-            self.prefix = parse.urlparse(prefix)._replace(params='', query='', fragment='')
+            for prefix in prefixes.split(','):
+                self.prefixes.append(parse.urlparse(prefix)._replace(params='', query='', fragment=''))
         self.visited = {}
         self.external_links = []
         self.broken_links = []
@@ -26,7 +28,7 @@ class Crawler:
         url = parse.urlparse(url)._replace(params='', query='', fragment='')
         if not url.netloc:
             # relative url
-            url = url._replace(scheme=self.prefix.scheme, netloc=self.prefix.netloc)
+            url = url._replace(scheme=current.scheme, netloc=current.netloc)
         if not url.path:
             # was only fragment
             url = url._replace(path=current.path)
@@ -78,8 +80,10 @@ class Crawler:
             for link in links:
                 self.link_count += 1
                 sanitized = self.sanitize(link.get('href'), url)
-                if sanitized.scheme == self.prefix.scheme and sanitized.netloc == self.prefix.netloc \
-                        and sanitized.path.startswith(self.prefix.path) and sanitized not in self.visited:
+                if sanitized not in self.visited and any(map(lambda p: sanitized.scheme == p.scheme and
+                                                                       sanitized.netloc == p.netloc and
+                                                                       sanitized.path.startswith(p.path),
+                                                             self.prefixes)):
                     self.queue.append(sanitized)
                 elif sanitized not in self.visited and sanitized not in self.external_links:
                     self.external_links.append(sanitized)
@@ -124,15 +128,14 @@ class Crawler:
 
 def main():
     parser = argparse.ArgumentParser(description='Crawl course pages from courses.cs.ut.ee')
-    parser.add_argument('--prefix', help='only crawl pages matching this prefix')
+    parser.add_argument('--prefixes', help='only crawl pages matching one of these prefixes (separated with comma)')
     parser.add_argument('start', help='first webpage to crawl')
     args = parser.parse_args()
 
-    crawler = Crawler(args.start, args.prefix)
+    crawler = Crawler(args.start, args.prefixes)
     crawler.run()
     crawler.export_results()
 
 
 if __name__ == '__main__':
     main()
-
